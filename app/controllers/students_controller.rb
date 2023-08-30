@@ -5,6 +5,8 @@ class StudentsController < ApplicationController
 
   def index
     @students = Student.all
+
+    Student.select('students.id, students.name AS student_name, enrollments.code, courses.name AS course_name, courses.year').left_joins(enrollments: :course).where('courses.year' => 2016)
   end
 
   def show; end
