@@ -10,15 +10,17 @@
 
 require 'securerandom'
 
-%w[Matemática Português História Geografia Física Química Inglês].each { |subject| Subject.create!(name: subject) }
+Subject::THEME.each { |subject| Subject.create!(name: subject) }
 
 5.times { |_| FactoryBot.create(:teacher) }
 
 teachers = Teacher.all
 subjects = Subject.all
 
+COURSES = (5..9).to_a
+
 # Para 2012:
-courses = (5..9).to_a.map do |grade|
+courses = COURSES.map do |grade|
   { year: 2012, name: "#{grade}º ano", starts_on: '2012-01-01', ends_on: '2012-12-31' }
 end
 
@@ -32,27 +34,23 @@ courses2012.each do |course|
   end
 end
 
-teacher_assignments = courses2012.map do |course|
-  subjects.map do |subject|
-    { course_id: course.id, subject_id: subject.id,
-      teacher_id: teachers.sample.id }
-  end
+teacher_assignments = courses2012.to_a.product(subjects).map do |course, subject|
+  { course_id: course.id, subject_id: subject.id,
+    teacher_id: teachers.sample.id }
 end
 
-TeacherAssignment.insert_all(teacher_assignments.flatten)
+TeacherAssignment.insert_all(teacher_assignments)
 
-exams2012 = courses2012.map do |course|
-  subjects.map do |subject|
-    { course_id: course.id, subject_id: subject.id,
-      realized_on: FFaker::Time.between(Date.new(2012, 1, 1), Date.new(2012, 12, 31)).to_s }
-  end
+exams2012 = courses2012.to_a.product(subjects).map do |course, subject|
+  { course_id: course.id, subject_id: subject.id,
+    realized_on: FFaker::Time.between(Date.new(2012, 1, 1), Date.new(2012, 12, 31)).to_s }
 end
 
-Exam.insert_all(exams2012.flatten)
+Exam.insert_all(exams2012)
 
-grades2012 = courses2012.map do |course|
-  course.enrollments.map do |enrollment|
-    course.exams.map do |exam|
+grades2012 = courses2012.flat_map do |course|
+  course.enrollments.flat_map do |enrollment|
+    course.exams.flat_map do |exam|
       exams = []
       8.times do
         exams.push({ value: rand(0..10), enrollment_code: enrollment.code, exam_id: exam.id })
@@ -62,7 +60,7 @@ grades2012 = courses2012.map do |course|
   end
 end
 
-Grade.insert_all(grades2012.flatten)
+Grade.insert_all(grades2012)
 
 # Para os outros anos:
 
@@ -81,37 +79,34 @@ Grade.insert_all(grades2012.flatten)
   end
 
   # Criando matrícula do curso seguinte para os alunos do 5º ao 8º ano:
-  enrollments = (5..8).to_a.map do |grade|
+  enrollments = (5..8).to_a.flat_map do |grade|
     Course.where(year: year - 1, name: "#{grade}º ano").first.students.map do |student|
       { code: SecureRandom.uuid, student_id: student.id,
         course_id: Course.where(year:, name: "#{grade + 1}º ano").first.id }
     end
   end
 
-  Enrollment.insert_all(enrollments.flatten)
+  Enrollment.insert_all(enrollments)
 
   courses = Course.where(year:)
 
-  teacher_assignments = courses.map do |course|
-    subjects.map do |subject|
-      { course_id: course.id, subject_id: subject.id, teacher_id: teachers.sample.id }
-    end
+  teacher_assignments = courses.to_a.product(subjects).map do |course, subject|
+    { course_id: course.id, subject_id: subject.id,
+      teacher_id: teachers.sample.id }
   end
 
-  TeacherAssignment.insert_all(teacher_assignments.flatten)
+  TeacherAssignment.insert_all(teacher_assignments)
 
-  exams = courses.map do |course|
-    subjects.map do |subject|
-      { course_id: course.id, subject_id: subject.id,
-        realized_on: FFaker::Time.between(Date.new(year, 1, 1), Date.new(year, 12, 31)).to_s }
-    end
+  exams = courses.to_a.product(subjects).map do |course, subject|
+    { course_id: course.id, subject_id: subject.id,
+      realized_on: FFaker::Time.between(Date.new(2012, 1, 1), Date.new(2012, 12, 31)).to_s }
   end
 
-  Exam.insert_all(exams.flatten)
+  Exam.insert_all(exams)
 
-  grades = courses.map do |course|
-    course.enrollments.map do |enrollment|
-      course.exams.map do |exam|
+  grades = courses.flat_map do |course|
+    course.enrollments.flat_map do |enrollment|
+      course.exams.flat_map do |exam|
         grades_hashes = []
         if year == 2023
           4.times do
@@ -127,5 +122,5 @@ Grade.insert_all(grades2012.flatten)
     end
   end
 
-  Grade.insert_all(grades.flatten)
+  Grade.insert_all(grades)
 end
