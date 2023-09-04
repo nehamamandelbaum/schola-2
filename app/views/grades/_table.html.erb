@@ -12,8 +12,8 @@
       <tbody>
         <% grades.each do |grade| %>
           <tr>
-            <td class="border px-8 py-4 w-full whitespace-nowrap"><%= grade.enrollment.code %> - <%= grade.enrollment.student.name %></td>
-            <td class="border px-8 py-4 w-full whitespace-nowrap"><%= grade.exam.subject.name %></td>
+            <td class="border px-8 py-4 w-full whitespace-nowrap"><%= grade.enrollment_code %> - <%= grade.student_name %></td>
+            <td class="border px-8 py-4 w-full whitespace-nowrap"><%= grade.subject_name %></td>
             <td class="border px-8 py-4 w-full whitespace-nowrap"><%= format('%.02f', grade.value) %></td>
             <td class="border px-8 py-4 whitespace-nowrap">
               <%= link_to 'Show', grade, class: "rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium" %>

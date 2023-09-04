@@ -1,15 +1,21 @@
 default: &default
-  adapter: sqlite3
+  adapter: postgresql
+  encoding: unicode
   pool: <%= ENV.fetch('RAILS_MAX_THREADS', 5) %>
+  username: <%= ENV.fetch('DB_USER', 'postgres') %>
+  password: <%= ENV.fetch('DB_PASS', 'sekret') %>
+  host: <%= ENV.fetch('DB_HOST', 'localhost') %>
 
 development:
   <<: *default
-  database: db/development.sqlite3
+  database: schola_development
 
 test:
   <<: *default
-  database: db/test.sqlite3
+  database: schola_test
 
 production:
   <<: *default
-  database: db/production.sqlite3
+  database: schola_production
+  username: schola
+  password: <%= ENV["SCHOLA_DATABASE_PASSWORD"] %>

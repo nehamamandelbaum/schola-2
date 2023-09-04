@@ -17,4 +17,12 @@ class Course < ApplicationRecord
   has_many :students, through: :enrollments
 
   has_many :exams, dependent: :destroy
+
+  scope :with_students, ->(year) {select('enrollments.code, 
+                                          students.name as student_name, 
+                                          students.id as student_id, 
+                                          courses.name as course_name, 
+                                          courses.year')
+                                  .joins(ActiveRecord::Base.sanitize_sql(['inner join enrollments on courses.id = enrollments.course_id and courses.year = ?', year]))
+                                  .joins('right join students on students.id = enrollments.student_id')}
 end

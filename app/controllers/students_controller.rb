@@ -2,12 +2,19 @@
 
 class StudentsController < ApplicationController
   before_action :set_student, only: %i[show edit update destroy]
+  before_action :set_year, only: %i[show index]
 
   def index
-    @students = Student.all
+    @students =   Course.with_students(@year)
   end
 
-  def show; end
+  def show
+    @code, @course_name = Enrollment.with_code_and_course_name(student_id: params[:id], year: @year)
+
+    @grades = Grade.average_per_student_and_year(student_id: params[:id], year: @year)
+
+    flash.now[:notice] = 'No grades for this year!' if @grades.empty?
+  end
 
   def new
     @student = Student.new
@@ -42,6 +49,10 @@ class StudentsController < ApplicationController
 
   def set_student
     @student = Student.find(params[:id])
+  end
+
+  def set_year
+    @year = params[:year] || Date.current.year
   end
 
   def student_params
