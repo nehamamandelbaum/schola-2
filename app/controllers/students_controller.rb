@@ -5,25 +5,13 @@ class StudentsController < ApplicationController
   before_action :set_year, only: %i[show index]
 
   def index
-    @students = Course.select('enrollments.code, students.name as student_name, students.id as student_id, courses.name as course_name, courses.year')
-                      .joins("inner join enrollments on courses.id = enrollments.course_id and courses.year = #{@year}")
-                      .joins('right join students on students.id = enrollments.student_id')
+    @students =   Course.with_students(@year)
   end
 
   def show
-    @code, @course_name = Enrollment.select('enrollments.code', 'courses.name')
-                                    .joins(:course)
-                                    .where("courses.year = #{@year} and enrollments.student_id = #{params[:id]}")
-                                    .pick(
-                                      :code, :name
-                                    )
+    @code, @course_name = Enrollment.with_code_and_course_name(student_id: params[:id], year: @year)
 
-    @grades = Grade.select('subjects.name as subject_name, grades.enrollment_code, avg(grades.value) as value, grades.id, students.name as student_name')
-                   .joins(enrollment: :student)
-                   .joins(enrollment: :course)
-                   .joins(exam: :subject)
-                   .where("enrollments.student_id = #{params[:id]} and courses.year = #{@year}")
-                   .group('subjects.name, grades.enrollment_code')
+    @grades = Grade.average_per_student_and_year(student_id: params[:id], year: @year)
 
     flash.now[:notice] = 'No grades for this year!' if @grades.empty?
   end
